@@ -279,8 +279,9 @@ cmd_usage() {
 	        Selectively reencrypt existing passwords using new gpg-id.
 	    $PROGRAM [ls] [subfolder]
 	        List passwords.
-	    $PROGRAM find pass-names...
+	    $PROGRAM find [pass-names...]
 	    	List passwords that match pass-names.
+                List all entries if no pass-names is provided.
 	    $PROGRAM [show] [--clip[=line-number],-c[line-number]] pass-name
 	        Show existing password and optionally put it on the clipboard.
 	        If put on the clipboard, it will be cleared in $CLIP_TIME seconds.
@@ -408,7 +409,11 @@ cmd_show() {
 }
 
 cmd_find() {
-	[[ $# -eq 0 ]] && die "Usage: $PROGRAM $COMMAND pass-names..."
+	if [ $# -eq 0 ]; then
+		( cd "$PREFIX" && find -type f ! -name '.*' -name '*.gpg' -printf '%P\n' | sed -E 's,\.gpg$,,g' )
+		return
+	fi
+#	[[ $# -eq 0 ]] && die "Usage: $PROGRAM $COMMAND pass-names..."
 	IFS="," eval 'echo "Search Terms: $*"'
 	local terms="*$(printf '%s*|*' "$@")"
 	tree -C -l --noreport -P "${terms%|*}" --prune --matchdirs --ignore-case "$PREFIX" | tail -n +2 | sed -E 's/\.gpg(\x1B\[[0-9]+m)?( ->|$)/\1\2/g'
